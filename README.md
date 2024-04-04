@@ -1,6 +1,8 @@
 # Mindful-Instagram
-Mindful Instagram is a Chrome extension designed to enrich your Instagram browsing by minimizing distractions. It offers a customizable approach to help you stay focused on what truly matters to you on social media.
 ![webstore_screenshot1](https://github.com/erzloh/Mindful-Instagram/assets/48589114/26f579f6-97f5-484f-8863-c83971c786b3)
+Mindful Instagram is a Chrome extension designed to enrich your Instagram browsing by minimizing distractions. It offers a customizable approach to help you stay focused on what truly matters to you on social media.
+
+I created this for my own usage but I thought it could interest some other people so I published it on the Chrome Web Store!
 
 ## Features at a Glance:
 
