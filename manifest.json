@@ -1,0 +1,29 @@
+{
+    "manifest_version": 3,
+    "name": "Mindful Instagram",
+    "version": "1.0.1",
+    "description": "Hides non-essential elements on Instagram to help you stay focused on what matters.",
+	"author": "Eric Holzer",
+	"icons": {
+		"16": "icon.png",
+		"48": "icon.png",
+		"128": "icon.png"
+	  },
+	  "action": {
+		"default_icon": {
+		  "16": "icon.png",
+		  "48": "icon.png",
+		  "128": "icon.png"
+		},
+		"default_popup": "popup.html"
+	},
+    "permissions": [
+		"storage"
+    ],
+    "content_scripts": [
+        {
+            "matches": ["*://*.instagram.com/*"],
+            "js": ["content.js"]
+        }
+    ]
+}

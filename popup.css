@@ -1,0 +1,170 @@
+@font-face {
+    font-family: 'instagram-sans';
+    src: url('./instagram-sans/Instagram\ Sans.ttf') format('ttf'),
+		 url('./instagram-sans/Instagram\ Sans\ Bold.ttf') format('ttf'),
+		 url('./instagram-sans/Instagram\ Sans\ Medium.ttf') format('ttf'),
+		 url('./instagram-sans/Instagram\ Sans\ Light.ttf') format('ttf'),
+		 url('./instagram-sans/Instagram\ Sans\ Headline.otf') format('otf');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'instagram-sans';
+    src: url('./instagram-sans/Instagram\ Sans.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'instagram-sans';
+    src: url('./instagram-sans/Instagram\ Sans\ Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'instagram-sans';
+    src: url('./instagram-sans/Instagram\ Sans\ Medium.ttf') format('truetype');
+    font-weight: 500; /* Medium */
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'instagram-sans';
+    src: url('./instagram-sans/Instagram\ Sans\ Light.ttf') format('truetype');
+    font-weight: 300; /* Light */
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'instagram-sans';
+    src: url('./instagram-sans/Instagram\ Sans\ Headline.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+html {
+	font-size: 16px;
+}
+
+body {
+	/* width: 300px;
+	margin: 0;
+	padding: 0; */
+	font-family: 'Roboto', sans-serif;
+	width: 100%;
+    min-width: 300px;
+    margin: 0 auto;
+}
+
+.header {
+	font-family: 'instagram-sans';
+	display: flex;
+	align-items: center;
+}
+
+.header--icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: 8px;
+}
+
+
+.header--title {
+	font-size: 1rem;
+	/* remove the bold */
+	font-weight: 400;
+}
+
+hr {
+	border: 0.3px solid #ccc;
+	margin: 0;
+}
+
+.settings {
+	padding: 0.5rem;
+}
+
+.settings--title {
+	font-size: 1rem;
+	margin: 0.5rem 0;
+}
+
+.settings--item {
+	margin: 1rem 0;
+}
+
+.settings--item label {
+	display: inline-block;
+}
+
+#timerDuration {
+	display: inline-block;
+	border-radius: 10px;
+	border: 0.8px solid #ccc;
+	width: 30px;
+	margin-left: 0.5rem;
+	padding: 5px;
+}
+
+#settings--duration {
+	margin-left: 1.55rem;
+}
+
+.settings--button {
+	display: flex;
+	justify-content: center;
+}
+
+button {
+	background-color: #0095f6;
+	color: white;
+	padding: 10px;
+	border: none;
+	cursor: pointer;
+	border-radius: 5px;
+	width: 150px;
+	margin-top: 15px;
+	margin-bottom: 15px;
+}
+
+button:hover {
+	background-color: #0077cc;
+}
+
+
+.footer {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	color: #ccc;
+	font-size: 0.8rem;
+	padding: 0;
+	margin: 10px;
+}
+
+a {
+	color: #aaa;
+}
+
+.settings {
+	margin: 20px;
+	margin-top: 10px;
+	margin-bottom: 0px;
+	padding: 20px;
+	border-radius: 15px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	animation: fadeInDown 0.5s ease-out forwards;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
