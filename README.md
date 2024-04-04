@@ -4,11 +4,11 @@ Mindful Instagram is a Chrome extension designed to enrich your Instagram browsi
 
 I created this for my own usage but I thought it could interest some other people so I published it on the Chrome Web Store!
 
-## Features at a Glance:
+## Features
 
-Customizable Countdown Timer: Begin your Instagram visit with a moment of pause, thanks to a timer you can set to your liking. It's a nudge towards a more intentional and less impulsive scrolling session.
+Customizable Start-up Countdown: Begin your Instagram visit with a moment of pause, thanks to a timer you can set to your liking. It's a nudge towards a more intentional and less impulsive scrolling session.
 
 Selective Visibility: Easily hide the Reels tab, home feed, and explore feed with tailored settings, allowing for a distraction-free Instagram experience that aligns with your digital well-being goals.
 
 ## Use
-This extension is designed for use on mobile browsers that support Chrome extensions, such as Kiwi Browser for Android and Orion Browser for iOS. By default, the Instagram feed at instagram.com is cluttered with ads, recommended reels, and is not presented in chronological order. However, this extension allows users to hide this default feed. To access a chronological feed featuring only the posts from accounts you follow, simply tap on the Instagram logo at the top left of the page and select the "following" button.
+This extension is designed for use on mobile browsers that support Chrome extensions, such as Kiwi Browser for Android and Orion Browser for iOS. By default, the Instagram feed at instagram.com is cluttered with ads, recommended reels, and is not presented in chronological order. However, this extension allows users to hide this default feed. To access a chronological feed featuring only the posts from accounts you follow, simply tap on the Instagram logo at the top left of the page and select the "following" button (this is a native feature of Instagram btw).
