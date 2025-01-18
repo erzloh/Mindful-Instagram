@@ -64,7 +64,6 @@ function showPopupAndStartCountdown(duration) {
 
 // ------------------------- Hide Elements -------------------------
 
-
 // Function to hide or show an element by selector
 function toggleElementVisibility(selector, displayStyle) {
 	const element = document.querySelector(selector);
@@ -81,6 +80,12 @@ function handleContentChanges() {
 	const reelsTabSelector = `a[href="/reels/"].x1i10hfl.x1ejq31n.x1hl2dhg`;
 	const homeFeedSelector = '.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1';
 	const exploreFeedSelector = '.x78zum5.xdt5ytf.xwrv7xz.x1n2onr6.xph46j.xfcsdxf.xsybdxg.x1bzgcud';
+	const topBarSelector = '._ab16._ab17';
+	const storiesSelector = '.x1qjc9v5.x78zum5.x1q0g3np.xl56j7k.xh8yej3';
+
+	// Get elements
+	const topBar = document.querySelector(topBarSelector);
+	const stories = document.querySelector(storiesSelector);
 
 	// Hide Reels tab
 	chrome.storage.sync.get(['hideReelsTab'], function(result) {
@@ -101,8 +106,45 @@ function handleContentChanges() {
 				toggleElementVisibility(homeFeedSelector, 'block');
 			}
 		});
+	
+		// move top bar to the bottom
+		if (topBar) {
+			topBar.style.position = 'fixed';
+			topBar.style.bottom = '149px';
+		}
+
+		// move stories to the bottom
+		if (stories) {
+			stories.style.position = 'fixed';
+			stories.style.bottom = '48px';
+		}
+
+		// remove alt from stories for yomitan support (avoid popups when clicking on stories)
+		const storiesContainer = document.querySelector('.x5lxg6s.x78zum5.x1q0g3np.x1wkxgih.x1sxyh0.xurb0ha.xqh3lvm')
+
+		if (storiesContainer) {
+			storiesContainer.childNodes[0].childNodes.forEach((item, index) => {
+				if (index != 0) {
+				item.childNodes[0].childNodes[0].childNodes[1].childNodes[0].alt = ''
+				}
+			})	
+		}
+
 	} else if (currentUrl.includes('/?variant=following')) {
 		toggleElementVisibility(homeFeedSelector, 'block');
+
+		// set top bar to its default position
+		if (topBar) {
+			topBar.style.position = 'static';
+			topBar.style.bottom = 'auto';
+		}
+
+		// set stories to its default position
+		if (stories) {
+			stories.style.position = 'static';
+			stories.style.bottom = 'auto';
+		}
+		
 	} else if (currentUrl.includes('/explore/')) {
 		// check if the setting is enabled
 		chrome.storage.sync.get(['hideExplorePosts'], function(result) {
@@ -120,4 +162,3 @@ const observer = new MutationObserver(handleContentChanges);
 
 // Start observing
 observer.observe(document.body, { childList: true, subtree: true });
-
