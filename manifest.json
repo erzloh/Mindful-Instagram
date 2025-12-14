@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Mindful Instagram",
-    "version": "1.0.1",
+    "version": "1.2.2",
     "description": "Hides non-essential elements on Instagram to help you stay focused on what matters.",
 	"author": "Eric Holzer",
 	"icons": {
