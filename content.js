@@ -1,9 +1,19 @@
 // ------------------------- Countdown -------------------------
 
+// Helper function to safely call Chrome storage API
+function safeChromeStorageGet(keys, callback) {
+	try {
+		if (chrome && chrome.storage && chrome.storage.sync) {
+			chrome.storage.sync.get(keys, callback);
+		}
+	} catch (error) {
+		console.warn('Chrome storage API unavailable:', error);
+	}
+}
 
 // Check for settings and then initiate the timer popup if enabled
-chrome.storage.sync.get(['timerEnabled', 'timerDuration'], function(result) {
-    if (result.timerEnabled !== false) { // If timer is enabled
+safeChromeStorageGet(['timerEnabled', 'timerDuration'], function(result) {
+    if (result && result.timerEnabled !== false) { // If timer is enabled
         const timerDuration = result.timerDuration || 10; // Default to 10 seconds
         showPopupAndStartCountdown(timerDuration);
     }
@@ -17,7 +27,7 @@ function showPopupAndStartCountdown(duration) {
         </div>
     </div>
     `;
-	
+
 	// Function to disable page interaction and prevent scrolling
 	function disablePageInteraction() {
 		document.body.style.overflow = 'hidden'; // Prevent scrolling
@@ -72,9 +82,116 @@ function toggleElementVisibility(selector, displayStyle) {
 	}
 }
 
+// ------------------------- Reel Viewer Detection -------------------------
+
+let reelViewerDetected = false;
+let reelScrollBlocked = false;
+
+// Function to prevent scrolling for reel viewer
+function preventReelScrolling(event) {
+	event.preventDefault();
+}
+
+// Function to block scrolling when reel viewer is open
+function blockReelScrolling() {
+	if (!reelScrollBlocked) {
+		document.body.style.overflow = 'hidden';
+		document.addEventListener('touchmove', preventReelScrolling, { passive: false });
+		document.addEventListener('wheel', preventReelScrolling, { passive: false });
+		reelScrollBlocked = true;
+		console.log('Scroll blocked for reel viewer');
+	}
+}
+
+// Function to unblock scrolling when reel viewer is closed
+function unblockReelScrolling() {
+	if (reelScrollBlocked) {
+		document.body.style.overflow = 'auto';
+		document.removeEventListener('touchmove', preventReelScrolling);
+		document.removeEventListener('wheel', preventReelScrolling);
+		reelScrollBlocked = false;
+		console.log('Scroll unblocked - reel viewer closed');
+	}
+}
+
+// Function to check if a reel viewer is currently open (by DOM structure)
+function detectReelViewer() {
+	// Check if countdown overlay is active - don't interfere with it
+	const countdownOverlay = document.getElementById('mindfulOverlay');
+	const countdownActive = countdownOverlay !== null;
+	
+	// Check for reel viewer elements based on the HTML structure
+	const reelVideoPlayers = document.querySelectorAll('div[aria-label="Video player"][role="group"]');
+	const reelSections = document.querySelectorAll('section.x78zum5.xdt5ytf.x1iyjqo2.x5yr21d.xh8yej3');
+	
+	let isReelOpen = false;
+	
+	// Check if any of these elements are visible and likely part of a reel viewer
+	for (let player of reelVideoPlayers) {
+		const rect = player.getBoundingClientRect();
+		// Reel viewers are typically large, taking up significant screen space
+		if (rect.width > 300 && rect.height > 400 && rect.top >= 0) {
+			const section = player.closest('section');
+			if (section) {
+				const video = section.querySelector('video[playsinline]');
+				if (video) {
+					const videoStyle = window.getComputedStyle(video);
+					if (videoStyle.objectFit === 'cover' || video.hasAttribute('playsinline')) {
+						isReelOpen = true;
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	// Alternative check: look for sections with reel-specific structure
+	if (!isReelOpen) {
+		for (let section of reelSections) {
+			const video = section.querySelector('video[playsinline]');
+			if (video) {
+				const rect = section.getBoundingClientRect();
+				if (rect.width > 300 && rect.height > 400 && rect.top >= 0 && rect.left >= 0) {
+					const videoStyle = window.getComputedStyle(video);
+					if (videoStyle.display !== 'none' && videoStyle.visibility !== 'hidden') {
+						isReelOpen = true;
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	// Handle scroll blocking based on reel viewer state
+	if (isReelOpen && !countdownActive) {
+		if (!reelViewerDetected) {
+			reelViewerDetected = true;
+			console.log('Reel viewer detected!');
+		}
+		blockReelScrolling();
+	} else {
+		// If no reel viewer found, reset the flag and unblock scrolling
+		if (reelViewerDetected) {
+			reelViewerDetected = false;
+			if (!countdownActive) {
+				unblockReelScrolling();
+			}
+		}
+	}
+	
+	return isReelOpen;
+}
+
 // Function to handle changes in the URL or content
 function handleContentChanges() {
 	const currentUrl = window.location.href;
+
+	// Detect reel viewer
+	try {
+		detectReelViewer();
+	} catch (error) {
+		console.warn('Error detecting reel viewer:', error);
+	}
 
 	// Selector constants
 	const reelsTabSelector = `a[href="/reels/"].x1i10hfl.x1ejq31n.x1hl2dhg`;
@@ -90,8 +207,8 @@ function handleContentChanges() {
 	const stories = document.querySelector(storiesSelector);
 
 	// Hide Reels tab
-	chrome.storage.sync.get(['hideReelsTab'], function(result) {
-		if (result.hideReelsTab !== false) {
+	safeChromeStorageGet(['hideReelsTab'], function(result) {
+		if (result && result.hideReelsTab !== false) {
 			toggleElementVisibility(reelsTabSelector, 'none');
 		} else {
 			toggleElementVisibility(reelsTabSelector, 'block');
@@ -102,8 +219,8 @@ function handleContentChanges() {
 	if (currentUrl === 'https://www.instagram.com/') {
 		console.log('home feed', document.querySelector(homeFeedSelector));
 		// check if the setting is enabled
-		chrome.storage.sync.get(['hideMainFeed'], function(result) {
-			if (result.hideMainFeed !== false) {
+		safeChromeStorageGet(['hideMainFeed'], function(result) {
+			if (result && result.hideMainFeed !== false) {
 				toggleElementVisibility(homeFeedSelector, 'none');
 			} else {
 				toggleElementVisibility(homeFeedSelector, 'block');
@@ -150,8 +267,8 @@ function handleContentChanges() {
 		
 	} else if (currentUrl.includes('/explore/')) {
 		// check if the setting is enabled
-		chrome.storage.sync.get(['hideExplorePosts'], function(result) {
-			if (result.hideExplorePosts !== false) {
+		safeChromeStorageGet(['hideExplorePosts'], function(result) {
+			if (result && result.hideExplorePosts !== false) {
 				toggleElementVisibility(exploreFeedSelector, 'none');
 				toggleElementVisibility(exploreFeedLoadingSelector, 'none');
 			} else {
@@ -167,3 +284,5 @@ const observer = new MutationObserver(handleContentChanges);
 
 // Start observing
 observer.observe(document.body, { childList: true, subtree: true });
+
+console.log('hello test 01')

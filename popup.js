@@ -1,12 +1,13 @@
 // Initialize form elements with saved settings
 document.addEventListener('DOMContentLoaded', () => {	
 	// Get settings from storage and update form elements
-    chrome.storage.sync.get(['timerEnabled', 'timerDuration', 'hideMainFeed', 'hideExplorePosts', 'hideReelsTab'], function(result) {
+    chrome.storage.sync.get(['timerEnabled', 'timerDuration', 'hideMainFeed', 'hideExplorePosts', 'hideReelsTab', 'preventReelScroll'], function(result) {
         document.getElementById('timerEnabled').checked = result.timerEnabled !== false; // default to true
         document.getElementById('timerDuration').value = result.timerDuration || 10; // default to 10 seconds
         document.getElementById('hideMainFeed').checked = result.hideMainFeed !== false;
         document.getElementById('hideExplorePosts').checked = result.hideExplorePosts !== false;
         document.getElementById('hideReelsTab').checked = result.hideReelsTab !== false;
+        document.getElementById('preventReelScroll').checked = result.preventReelScroll !== false; // default to true
     });
 
 	// Update the disabled state of the timer input based on the timer checkbox
@@ -27,8 +28,9 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     const hideMainFeed = document.getElementById('hideMainFeed').checked;
     const hideExplorePosts = document.getElementById('hideExplorePosts').checked;
     const hideReelsTab = document.getElementById('hideReelsTab').checked;
+    const preventReelScroll = document.getElementById('preventReelScroll').checked;
 
-    chrome.storage.sync.set({timerEnabled, timerDuration, hideMainFeed, hideExplorePosts, hideReelsTab}, function() {
+    chrome.storage.sync.set({timerEnabled, timerDuration, hideMainFeed, hideExplorePosts, hideReelsTab, preventReelScroll}, function() {
         alert('Settings saved.');
     });
 });
