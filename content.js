@@ -125,12 +125,25 @@ function detectReelViewer() {
 	const reelSections = document.querySelectorAll('section.x78zum5.xdt5ytf.x1iyjqo2.x5yr21d.xh8yej3');
 	
 	let isReelOpen = false;
+	const viewportHeight = window.innerHeight;
+	const viewportWidth = window.innerWidth;
 	
 	// Check if any of these elements are visible and likely part of a reel viewer
+	// Reel viewers are typically full-width and take up most of the viewport height
 	for (let player of reelVideoPlayers) {
 		const rect = player.getBoundingClientRect();
-		// Reel viewers are typically large, taking up significant screen space
-		if (rect.width > 300 && rect.height > 400 && rect.top >= 0) {
+		
+		// Reel viewers typically:
+		// 1. Take up most of the viewport height (at least 70%)
+		// 2. Are full-width (at least 90% of viewport width)
+		// 3. Start near the top of the viewport
+		const heightRatio = rect.height / viewportHeight;
+		const widthRatio = rect.width / viewportWidth;
+		const isFullWidth = widthRatio > 0.9; // Full width (at least 90%)
+		const isTallEnough = heightRatio > 0.7; // Takes up most of viewport height
+		const isNearTop = rect.top >= 0 && rect.top < viewportHeight * 0.1; // Starts near top
+		
+		if (isFullWidth && isTallEnough && isNearTop) {
 			const section = player.closest('section');
 			if (section) {
 				const video = section.querySelector('video[playsinline]');
@@ -151,7 +164,15 @@ function detectReelViewer() {
 			const video = section.querySelector('video[playsinline]');
 			if (video) {
 				const rect = section.getBoundingClientRect();
-				if (rect.width > 300 && rect.height > 400 && rect.top >= 0 && rect.left >= 0) {
+				
+				// Similar checks: full-width, tall, near top
+				const heightRatio = rect.height / viewportHeight;
+				const widthRatio = rect.width / viewportWidth;
+				const isFullWidth = widthRatio > 0.9;
+				const isTallEnough = heightRatio > 0.7;
+				const isNearTop = rect.top >= 0 && rect.top < viewportHeight * 0.1;
+				
+				if (isFullWidth && isTallEnough && isNearTop) {
 					const videoStyle = window.getComputedStyle(video);
 					if (videoStyle.display !== 'none' && videoStyle.visibility !== 'hidden') {
 						isReelOpen = true;
