@@ -1,6 +1,6 @@
 // Initialize form elements with saved settings
-document.addEventListener('DOMContentLoaded', () => {	
-	// Get settings from storage and update form elements
+document.addEventListener('DOMContentLoaded', () => {
+// Get settings from storage and update form elements
     chrome.storage.sync.get(['timerEnabled', 'timerDuration', 'hideMainFeed', 'hideExplorePosts', 'hideReelsTab', 'preventReelScroll'], function(result) {
         document.getElementById('timerEnabled').checked = result.timerEnabled !== false; // default to true
         document.getElementById('timerDuration').value = result.timerDuration || 10; // default to 10 seconds
@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('preventReelScroll').checked = result.preventReelScroll !== false; // default to true
     });
 
-	// Update the disabled state of the timer input based on the timer checkbox
-	const timerEnabledCheckbox = document.getElementById('timerEnabled');
+// Update the disabled state of the timer input based on the timer checkbox
+const timerEnabledCheckbox = document.getElementById('timerEnabled');
     const timerDurationInput = document.getElementById('timerDuration');
 
     function updateTimerDurationDisabledState() {

@@ -1,23 +1,29 @@
+// Detect current domain
+const isInstagram = window.location.hostname.includes('instagram.com');
+const isFacebook = window.location.hostname.includes('facebook.com');
+
 // ------------------------- Countdown -------------------------
 
 // Helper function to safely call Chrome storage API
 function safeChromeStorageGet(keys, callback) {
-	try {
-		if (chrome && chrome.storage && chrome.storage.sync) {
-			chrome.storage.sync.get(keys, callback);
-		}
-	} catch (error) {
-		console.warn('Chrome storage API unavailable:', error);
-	}
+try {
+if (chrome && chrome.storage && chrome.storage.sync) {
+chrome.storage.sync.get(keys, callback);
+}
+} catch (error) {
+console.warn('Chrome storage API unavailable:', error);
+}
 }
 
-// Check for settings and then initiate the timer popup if enabled
+// Check for settings and then initiate the timer popup if enabled (Instagram only)
+if (isInstagram) {
 safeChromeStorageGet(['timerEnabled', 'timerDuration'], function(result) {
     if (result && result.timerEnabled !== false) { // If timer is enabled
         const timerDuration = result.timerDuration || 10; // Default to 10 seconds
         showPopupAndStartCountdown(timerDuration);
     }
 });
+}
 
 function showPopupAndStartCountdown(duration) {
     const overlayHTML = `
@@ -28,29 +34,29 @@ function showPopupAndStartCountdown(duration) {
     </div>
     `;
 
-	// Function to disable page interaction and prevent scrolling
-	function disablePageInteraction() {
-		document.body.style.overflow = 'hidden'; // Prevent scrolling
-		document.body.style.pointerEvents = 'none';
-		document.body.insertAdjacentHTML('beforeend', overlayHTML);
-		document.addEventListener('touchmove', preventScrolling, { passive: false }); // Prevent touch scrolling
-	}
+// Function to disable page interaction and prevent scrolling
+function disablePageInteraction() {
+document.body.style.overflow = 'hidden'; // Prevent scrolling
+document.body.style.pointerEvents = 'none';
+document.body.insertAdjacentHTML('beforeend', overlayHTML);
+document.addEventListener('touchmove', preventScrolling, { passive: false }); // Prevent touch scrolling
+}
 
-	// Function to enable page interaction and allow scrolling
-	function enablePageInteraction() {
-		document.body.style.overflow = 'auto'; // Re-enable scrolling
-		document.body.style.pointerEvents = 'all';
-		const overlay = document.getElementById('mindfulOverlay');
-		if (overlay) {
-			overlay.remove();
-		}
-		document.removeEventListener('touchmove', preventScrolling); // Re-enable touch scrolling
-	}
+// Function to enable page interaction and allow scrolling
+function enablePageInteraction() {
+document.body.style.overflow = 'auto'; // Re-enable scrolling
+document.body.style.pointerEvents = 'all';
+const overlay = document.getElementById('mindfulOverlay');
+if (overlay) {
+overlay.remove();
+}
+document.removeEventListener('touchmove', preventScrolling); // Re-enable touch scrolling
+}
 
-	// Function to prevent touch scrolling
-	function preventScrolling(event) {
-		event.preventDefault();
-	}
+// Function to prevent touch scrolling
+function preventScrolling(event) {
+event.preventDefault();
+}
 
     // Initially disable interaction and prevent scrolling
     disablePageInteraction();
@@ -64,7 +70,7 @@ function showPopupAndStartCountdown(duration) {
         }
         if (counter <= 0) {
             clearInterval(interval);
-			document.getElementById('timerText').textContent = 'You can now use Instagram mindfully.';
+document.getElementById('timerText').textContent = 'You can now use Instagram mindfully.';
             // Allow a brief moment before enabling interaction to let the user acknowledge the message
             setTimeout(enablePageInteraction, 1000); // Re-enable interaction and scrolling after 1 second
         }
@@ -76,234 +82,317 @@ function showPopupAndStartCountdown(duration) {
 
 // Function to hide or show an element by selector
 function toggleElementVisibility(selector, displayStyle) {
-	const element = document.querySelector(selector);
-	if (element) {
-		element.style.display = displayStyle;
-	}
+const element = document.querySelector(selector);
+if (element) {
+element.style.display = displayStyle;
+}
 }
 
-// ------------------------- Reel Viewer Detection -------------------------
+// ------------------------- Scroll Blocking (Instagram & Facebook) -------------------------
+
+let videoScrollBlocked = false;
+
+// Function to prevent scrolling for videos
+function preventVideoScrolling(event) {
+event.preventDefault();
+}
+
+// Function to block scrolling when video is playing
+function blockVideoScrolling() {
+if (!videoScrollBlocked) {
+document.body.style.overflow = 'hidden';
+document.addEventListener('touchmove', preventVideoScrolling, { passive: false });
+document.addEventListener('wheel', preventVideoScrolling, { passive: false });
+videoScrollBlocked = true;
+console.log('Scroll blocked for video');
+}
+}
+
+// Function to unblock scrolling when video is not playing
+function unblockVideoScrolling() {
+if (videoScrollBlocked) {
+document.body.style.overflow = 'auto';
+document.removeEventListener('touchmove', preventVideoScrolling);
+document.removeEventListener('wheel', preventVideoScrolling);
+videoScrollBlocked = false;
+console.log('Scroll unblocked - video stopped');
+}
+}
+
+// Function to detect if a video is playing in the viewport
+function isVideoPlayingInViewport() {
+const videos = document.querySelectorAll('video');
+const viewportHeight = window.innerHeight;
+const viewportWidth = window.innerWidth;
+
+for (let video of videos) {
+// Check if video is visible in viewport
+const rect = video.getBoundingClientRect();
+const isInViewport = (
+rect.bottom > 0 &&
+rect.right > 0 &&
+rect.top < viewportHeight &&
+rect.left < viewportWidth
+);
+
+// Check if video is playing
+const isPlaying = video.currentTime > 0 && !video.paused && !video.ended;
+
+if (isInViewport && isPlaying) {
+return true;
+}
+}
+
+return false;
+}
+
+// Scroll blocking detection for both Instagram and Facebook
+function detectAndHandleVideoScrolling() {
+safeChromeStorageGet(['preventReelScroll'], function(result) {
+// Default to true if not explicitly set to false
+const scrollBlockingEnabled = result.preventReelScroll !== false;
+
+if (!scrollBlockingEnabled) {
+unblockVideoScrolling();
+return;
+}
+
+if (isVideoPlayingInViewport()) {
+blockVideoScrolling();
+} else {
+unblockVideoScrolling();
+}
+});
+}
+
+// Check for video scroll blocking periodically (for both platforms)
+if (isInstagram || isFacebook) {
+setInterval(detectAndHandleVideoScrolling, 500);
+}
+
+// ------------------------- Reel Viewer Detection (Instagram Only) -------------------------
 
 let reelViewerDetected = false;
 let reelScrollBlocked = false;
 
 // Function to prevent scrolling for reel viewer
 function preventReelScrolling(event) {
-	event.preventDefault();
+event.preventDefault();
 }
 
-// Function to block scrolling when reel viewer is open
+// Function to block scrolling when reel viewer is open (Instagram)
 function blockReelScrolling() {
-	if (!reelScrollBlocked) {
-		document.body.style.overflow = 'hidden';
-		document.addEventListener('touchmove', preventReelScrolling, { passive: false });
-		document.addEventListener('wheel', preventReelScrolling, { passive: false });
-		reelScrollBlocked = true;
-		console.log('Scroll blocked for reel viewer');
-	}
+if (!reelScrollBlocked) {
+document.body.style.overflow = 'hidden';
+document.addEventListener('touchmove', preventReelScrolling, { passive: false });
+document.addEventListener('wheel', preventReelScrolling, { passive: false });
+reelScrollBlocked = true;
+console.log('Scroll blocked for reel viewer');
+}
 }
 
-// Function to unblock scrolling when reel viewer is closed
+// Function to unblock scrolling when reel viewer is closed (Instagram)
 function unblockReelScrolling() {
-	if (reelScrollBlocked) {
-		document.body.style.overflow = 'auto';
-		document.removeEventListener('touchmove', preventReelScrolling);
-		document.removeEventListener('wheel', preventReelScrolling);
-		reelScrollBlocked = false;
-		console.log('Scroll unblocked - reel viewer closed');
-	}
+if (reelScrollBlocked) {
+document.body.style.overflow = 'auto';
+document.removeEventListener('touchmove', preventReelScrolling);
+document.removeEventListener('wheel', preventReelScrolling);
+reelScrollBlocked = false;
+console.log('Scroll unblocked - reel viewer closed');
+}
 }
 
 // Function to check if a reel viewer is currently open (by DOM structure)
 function detectReelViewer() {
-	// Check if countdown overlay is active - don't interfere with it
-	const countdownOverlay = document.getElementById('mindfulOverlay');
-	const countdownActive = countdownOverlay !== null;
-	
-	// Check for reel viewer elements based on the HTML structure
-	const reelVideoPlayers = document.querySelectorAll('div[aria-label="Video player"][role="group"]');
-	const reelSections = document.querySelectorAll('section.x78zum5.xdt5ytf.x1iyjqo2.x5yr21d.xh8yej3');
-	
-	let isReelOpen = false;
-	const viewportHeight = window.innerHeight;
-	const viewportWidth = window.innerWidth;
-	
-	// Check if any of these elements are visible and likely part of a reel viewer
-	// Reel viewers are typically full-width and take up most of the viewport height
-	for (let player of reelVideoPlayers) {
-		const rect = player.getBoundingClientRect();
-		
-		// Reel viewers typically:
-		// 1. Take up most of the viewport height (at least 70%)
-		// 2. Are full-width (at least 90% of viewport width)
-		// 3. Start near the top of the viewport
-		const heightRatio = rect.height / viewportHeight;
-		const widthRatio = rect.width / viewportWidth;
-		const isFullWidth = widthRatio > 0.9; // Full width (at least 90%)
-		const isTallEnough = heightRatio > 0.7; // Takes up most of viewport height
-		const isNearTop = rect.top >= 0 && rect.top < viewportHeight * 0.1; // Starts near top
-		
-		if (isFullWidth && isTallEnough && isNearTop) {
-			const section = player.closest('section');
-			if (section) {
-				const video = section.querySelector('video[playsinline]');
-				if (video) {
-					const videoStyle = window.getComputedStyle(video);
-					if (videoStyle.objectFit === 'cover' || video.hasAttribute('playsinline')) {
-						isReelOpen = true;
-						break;
-					}
-				}
-			}
-		}
-	}
-	
-	// Alternative check: look for sections with reel-specific structure
-	if (!isReelOpen) {
-		for (let section of reelSections) {
-			const video = section.querySelector('video[playsinline]');
-			if (video) {
-				const rect = section.getBoundingClientRect();
-				
-				// Similar checks: full-width, tall, near top
-				const heightRatio = rect.height / viewportHeight;
-				const widthRatio = rect.width / viewportWidth;
-				const isFullWidth = widthRatio > 0.9;
-				const isTallEnough = heightRatio > 0.7;
-				const isNearTop = rect.top >= 0 && rect.top < viewportHeight * 0.1;
-				
-				if (isFullWidth && isTallEnough && isNearTop) {
-					const videoStyle = window.getComputedStyle(video);
-					if (videoStyle.display !== 'none' && videoStyle.visibility !== 'hidden') {
-						isReelOpen = true;
-						break;
-					}
-				}
-			}
-		}
-	}
-	
-	// Handle scroll blocking based on reel viewer state
-	if (isReelOpen && !countdownActive) {
-		if (!reelViewerDetected) {
-			reelViewerDetected = true;
-			console.log('Reel viewer detected!');
-		}
-		blockReelScrolling();
-	} else {
-		// If no reel viewer found, reset the flag and unblock scrolling
-		if (reelViewerDetected) {
-			reelViewerDetected = false;
-			if (!countdownActive) {
-				unblockReelScrolling();
-			}
-		}
-	}
-	
-	return isReelOpen;
+// Check if countdown overlay is active - don't interfere with it
+const countdownOverlay = document.getElementById('mindfulOverlay');
+const countdownActive = countdownOverlay !== null;
+
+// Check for reel viewer elements based on the HTML structure
+const reelVideoPlayers = document.querySelectorAll('div[aria-label="Video player"][role="group"]');
+const reelSections = document.querySelectorAll('section.x78zum5.xdt5ytf.x1iyjqo2.x5yr21d.xh8yej3');
+
+let isReelOpen = false;
+const viewportHeight = window.innerHeight;
+const viewportWidth = window.innerWidth;
+
+// Check if any of these elements are visible and likely part of a reel viewer
+// Reel viewers are typically full-width and take up most of the viewport height
+for (let player of reelVideoPlayers) {
+const rect = player.getBoundingClientRect();
+
+// Reel viewers typically:
+// 1. Take up most of the viewport height (at least 70%)
+// 2. Are full-width (at least 90% of viewport width)
+// 3. Start near the top of the viewport
+const heightRatio = rect.height / viewportHeight;
+const widthRatio = rect.width / viewportWidth;
+const isFullWidth = widthRatio > 0.9; // Full width (at least 90%)
+const isTallEnough = heightRatio > 0.7; // Takes up most of viewport height
+const isNearTop = rect.top >= 0 && rect.top < viewportHeight * 0.1; // Starts near top
+
+if (isFullWidth && isTallEnough && isNearTop) {
+const section = player.closest('section');
+if (section) {
+const video = section.querySelector('video[playsinline]');
+if (video) {
+const videoStyle = window.getComputedStyle(video);
+if (videoStyle.objectFit === 'cover' || video.hasAttribute('playsinline')) {
+isReelOpen = true;
+break;
+}
+}
+}
+}
 }
 
-// Function to handle changes in the URL or content
-function handleContentChanges() {
-	const currentUrl = window.location.href;
+// Alternative check: look for sections with reel-specific structure
+if (!isReelOpen) {
+for (let section of reelSections) {
+const video = section.querySelector('video[playsinline]');
+if (video) {
+const rect = section.getBoundingClientRect();
 
-	// Detect reel viewer
-	try {
-		detectReelViewer();
-	} catch (error) {
-		console.warn('Error detecting reel viewer:', error);
-	}
+// Similar checks: full-width, tall, near top
+const heightRatio = rect.height / viewportHeight;
+const widthRatio = rect.width / viewportWidth;
+const isFullWidth = widthRatio > 0.9;
+const isTallEnough = heightRatio > 0.7;
+const isNearTop = rect.top >= 0 && rect.top < viewportHeight * 0.1;
 
-	// Selector constants
-	const reelsTabSelector = `a[href="/reels/"].x1i10hfl.x1ejq31n.x1hl2dhg`;
-	// const homeFeedSelector = '.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1';
-	const homeFeedSelector = '.html-div.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x9f619.xjbqb8w.x78zum5.x15mokao.x1ga7v0g.x16uus16.xbiv7yw.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1';
-	const exploreFeedSelector = '.x78zum5.xdt5ytf.x11lt19s.x1n2onr6.xph46j.x7x3xai.xsybdxg.x194l6zq';
-	const exploreFeedLoadingSelector = '.xemfg65.xa4qsjk.x1ka1v4i.xbv57ra';
-	const topBarSelector = '._ab16._ab17';
-	const storiesSelector = '.x1qjc9v5.x78zum5.x1q0g3np.xl56j7k.xh8yej3';
-
-	// Get elements
-	const topBar = document.querySelector(topBarSelector);
-	const stories = document.querySelector(storiesSelector);
-
-	// Hide Reels tab
-	safeChromeStorageGet(['hideReelsTab'], function(result) {
-		if (result && result.hideReelsTab !== false) {
-			toggleElementVisibility(reelsTabSelector, 'none');
-		} else {
-			toggleElementVisibility(reelsTabSelector, 'block');
-		}
-	});
-
-	// Conditional display based on the current URL
-	if (currentUrl === 'https://www.instagram.com/') {
-		console.log('home feed', document.querySelector(homeFeedSelector));
-		// check if the setting is enabled
-		safeChromeStorageGet(['hideMainFeed'], function(result) {
-			if (result && result.hideMainFeed !== false) {
-				toggleElementVisibility(homeFeedSelector, 'none');
-			} else {
-				toggleElementVisibility(homeFeedSelector, 'block');
-			}
-		});
-	
-		// move top bar to the bottom
-		if (topBar) {
-			topBar.style.position = 'fixed';
-			topBar.style.bottom = '149px';
-		}
-
-		// move stories to the bottom
-		if (stories) {
-			stories.style.position = 'fixed';
-			stories.style.bottom = '48px';
-		}
-
-		// remove alt from stories for yomitan support (avoid popups when clicking on stories)
-		const storiesContainer = document.querySelector('.x5lxg6s.x78zum5.x1q0g3np.x1wkxgih.x1sxyh0.xurb0ha.xqh3lvm')
-
-		if (storiesContainer) {
-			storiesContainer.childNodes[0].childNodes.forEach((item, index) => {
-				if (index != 0) {
-				item.childNodes[0].childNodes[0].childNodes[1].childNodes[0].alt = ''
-				}
-			})	
-		}
-
-	} else if (currentUrl.includes('/?variant=following')) {
-		toggleElementVisibility(homeFeedSelector, 'block');
-
-		// set top bar to its default position
-		if (topBar) {
-			topBar.style.position = 'static';
-			topBar.style.bottom = 'auto';
-		}
-
-		// set stories to its default position
-		if (stories) {
-			stories.style.position = 'static';
-			stories.style.bottom = 'auto';
-		}
-		
-	} else if (currentUrl.includes('/explore/')) {
-		// check if the setting is enabled
-		safeChromeStorageGet(['hideExplorePosts'], function(result) {
-			if (result && result.hideExplorePosts !== false) {
-				toggleElementVisibility(exploreFeedSelector, 'none');
-				toggleElementVisibility(exploreFeedLoadingSelector, 'none');
-			} else {
-				toggleElementVisibility(exploreFeedSelector, 'block');
-				toggleElementVisibility(exploreFeedLoadingSelector, 'block');
-			}
-		});
-	}
+if (isFullWidth && isTallEnough && isNearTop) {
+const videoStyle = window.getComputedStyle(video);
+if (videoStyle.display !== 'none' && videoStyle.visibility !== 'hidden') {
+isReelOpen = true;
+break;
+}
+}
+}
+}
 }
 
-// Observer for page mutations
-const observer = new MutationObserver(handleContentChanges);
+// Handle scroll blocking based on reel viewer state
+if (isReelOpen && !countdownActive) {
+if (!reelViewerDetected) {
+reelViewerDetected = true;
+console.log('Reel viewer detected!');
+}
+blockReelScrolling();
+} else {
+// If no reel viewer found, reset the flag and unblock scrolling
+if (reelViewerDetected) {
+reelViewerDetected = false;
+if (!countdownActive) {
+unblockReelScrolling();
+}
+}
+}
 
-// Start observing
+return isReelOpen;
+}
+
+// Function to handle changes in the URL or content (Instagram)
+function handleInstagramContentChanges() {
+const currentUrl = window.location.href;
+
+// Detect reel viewer
+try {
+detectReelViewer();
+} catch (error) {
+console.warn('Error detecting reel viewer:', error);
+}
+
+// Selector constants
+const reelsTabSelector = `a[href="/reels/"].x1i10hfl.x1ejq31n.x1hl2dhg`;
+// const homeFeedSelector = '.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1';
+const homeFeedSelector = '.html-div.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x9f619.xjbqb8w.x78zum5.x15mokao.x1ga7v0g.x16uus16.xbiv7yw.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1';
+const exploreFeedSelector = '.x78zum5.xdt5ytf.x11lt19s.x1n2onr6.xph46j.x7x3xai.xsybdxg.x194l6zq';
+const exploreFeedLoadingSelector = '.xemfg65.xa4qsjk.x1ka1v4i.xbv57ra';
+const topBarSelector = '._ab16._ab17';
+const storiesSelector = '.x1qjc9v5.x78zum5.x1q0g3np.xl56j7k.xh8yej3';
+
+// Get elements
+const topBar = document.querySelector(topBarSelector);
+const stories = document.querySelector(storiesSelector);
+
+// Hide Reels tab
+safeChromeStorageGet(['hideReelsTab'], function(result) {
+if (result && result.hideReelsTab !== false) {
+toggleElementVisibility(reelsTabSelector, 'none');
+} else {
+toggleElementVisibility(reelsTabSelector, 'block');
+}
+});
+
+// Conditional display based on the current URL
+if (currentUrl === 'https://www.instagram.com/') {
+console.log('home feed', document.querySelector(homeFeedSelector));
+// check if the setting is enabled
+safeChromeStorageGet(['hideMainFeed'], function(result) {
+if (result && result.hideMainFeed !== false) {
+toggleElementVisibility(homeFeedSelector, 'none');
+} else {
+toggleElementVisibility(homeFeedSelector, 'block');
+}
+});
+
+// move top bar to the bottom
+if (topBar) {
+topBar.style.position = 'fixed';
+topBar.style.bottom = '149px';
+}
+
+// move stories to the bottom
+if (stories) {
+stories.style.position = 'fixed';
+stories.style.bottom = '48px';
+}
+
+// remove alt from stories for yomitan support (avoid popups when clicking on stories)
+const storiesContainer = document.querySelector('.x5lxg6s.x78zum5.x1q0g3np.x1wkxgih.x1sxyh0.xurb0ha.xqh3lvm')
+
+if (storiesContainer) {
+storiesContainer.childNodes[0].childNodes.forEach((item, index) => {
+if (index != 0) {
+item.childNodes[0].childNodes[0].childNodes[1].childNodes[0].alt = ''
+}
+})
+}
+
+} else if (currentUrl.includes('/?variant=following')) {
+toggleElementVisibility(homeFeedSelector, 'block');
+
+// set top bar to its default position
+if (topBar) {
+topBar.style.position = 'static';
+topBar.style.bottom = 'auto';
+}
+
+// set stories to its default position
+if (stories) {
+stories.style.position = 'static';
+stories.style.bottom = 'auto';
+}
+
+} else if (currentUrl.includes('/explore/')) {
+// check if the setting is enabled
+safeChromeStorageGet(['hideExplorePosts'], function(result) {
+if (result && result.hideExplorePosts !== false) {
+toggleElementVisibility(exploreFeedSelector, 'none');
+toggleElementVisibility(exploreFeedLoadingSelector, 'none');
+} else {
+toggleElementVisibility(exploreFeedSelector, 'block');
+toggleElementVisibility(exploreFeedLoadingSelector, 'block');
+}
+});
+}
+}
+
+// Observer for page mutations (Instagram only)
+if (isInstagram) {
+const observer = new MutationObserver(handleInstagramContentChanges);
 observer.observe(document.body, { childList: true, subtree: true });
+console.log('hello test 01');
+}
 
-console.log('hello test 01')
+console.log('Mindful extension loaded on', isInstagram ? 'Instagram' : isFacebook ? 'Facebook' : 'unknown domain');
