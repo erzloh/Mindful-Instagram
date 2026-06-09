@@ -1,6 +1,7 @@
 // Detect current domain
 const isInstagram = window.location.hostname.includes('instagram.com');
 const isFacebook = window.location.hostname.includes('facebook.com');
+const isTikTok = window.location.hostname.includes('tiktok.com');
 
 // ------------------------- Countdown -------------------------
 
@@ -88,7 +89,7 @@ element.style.display = displayStyle;
 }
 }
 
-// ------------------------- Scroll Blocking (Instagram & Facebook) -------------------------
+// ------------------------- Scroll Blocking (Instagram, Facebook & TikTok) -------------------------
 
 let videoScrollBlocked = false;
 
@@ -165,9 +166,9 @@ unblockVideoScrolling();
 });
 }
 
-// Check for video scroll blocking periodically (for both platforms)
-if (isInstagram || isFacebook) {
-setInterval(detectAndHandleVideoScrolling, 500);
+// Check for video scroll blocking periodically (for supported platforms)
+if (isInstagram || isFacebook || isTikTok) {
+    setInterval(detectAndHandleVideoScrolling, 500);
 }
 
 // ------------------------- Reel Viewer Detection (Instagram Only) -------------------------
@@ -395,4 +396,4 @@ observer.observe(document.body, { childList: true, subtree: true });
 console.log('hello test 01');
 }
 
-console.log('Mindful extension loaded on', isInstagram ? 'Instagram' : isFacebook ? 'Facebook' : 'unknown domain');
+console.log('Mindful extension loaded on', isInstagram ? 'Instagram' : isFacebook ? 'Facebook' : isTikTok ? 'TikTok' : 'unknown domain');

@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Mindful Instagram",
     "version": "1.2.2",
-    "description": "Hides non-essential elements on Instagram to help you stay focused on what matters.",
+    "description": "Hides non-essential elements on Instagram, Facebook and TikTok to help you stay focused on what matters.",
 "author": "Eric Holzer",
 "icons": {
 "16": "icon.png",
@@ -22,7 +22,7 @@
     ],
     "content_scripts": [
         {
-            "matches": ["*://*.instagram.com/*", "*://*.facebook.com/*"],
+            "matches": ["*://*.instagram.com/*", "*://*.facebook.com/*", "*://*.tiktok.com/*"],
             "js": ["content.js"]
         }
     ]
